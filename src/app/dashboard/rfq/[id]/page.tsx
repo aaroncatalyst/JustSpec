@@ -81,6 +81,14 @@ export default async function RfqPage({ params }: Props) {
 
   if (!rfq || rfq.user_id !== user.id) notFound()
 
+  const { data: userData } = await supabase
+    .from('users')
+    .select('rfq_credits')
+    .eq('id', user.id)
+    .single()
+
+  const credits: number = userData?.rfq_credits ?? 0
+
   const { data: rawQuotes } = await supabase
     .from('quotes')
     .select('*')
@@ -144,7 +152,7 @@ export default async function RfqPage({ params }: Props) {
         <div className="bg-white border border-[#e8e8e2] rounded-2xl p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xs font-semibold text-[#8a8a82] uppercase tracking-wider">Progress</h2>
-            {rfq.status === 'draft' && <ProcessRfqButton rfqId={rfq.id} />}
+            {rfq.status === 'draft' && <ProcessRfqButton rfqId={rfq.id} userCredits={credits} />}
           </div>
           <div className="flex items-start">
             {STATUS_STEPS.map((step, i) => {
