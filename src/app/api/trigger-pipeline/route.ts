@@ -38,7 +38,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'RFQ not found' }, { status: 404 })
   }
 
-  const response = await fetch(`${pipelineUrl}/api/process-rfq`, {
+  // Fire-and-forget: don't await the pipeline response — it takes 60+ seconds
+  // and Vercel functions timeout at ~10-15s. FastAPI updates Supabase as it progresses.
+  fetch(`${pipelineUrl}/api/process-rfq`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -46,18 +48,7 @@ export async function POST(request: NextRequest) {
       supabase_url: supabaseUrl,
       supabase_service_key: serviceKey,
     }),
-  })
+  }).catch(err => console.error('Pipeline fire-and-forget error:', err))
 
-  const data = await response.json()
-
-  if (!response.ok) {
-    const detail = data.detail ?? data.error ?? JSON.stringify(data)
-    console.error(`FastAPI pipeline error (${response.status}):`, detail)
-    return NextResponse.json(
-      { error: detail },
-      { status: response.status }
-    )
-  }
-
-  return NextResponse.json(data)
+  return NextResponse.json({ status: 'processing' })
 }
