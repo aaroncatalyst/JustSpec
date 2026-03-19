@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import ProcessRfqButton from '@/components/ProcessRfqButton'
+import RfqStatusPoller from '@/components/RfqStatusPoller'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -152,7 +153,11 @@ export default async function RfqPage({ params }: Props) {
         <div className="bg-white border border-[#e8e8e2] rounded-2xl p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xs font-semibold text-[#8a8a82] uppercase tracking-wider">Progress</h2>
-            {rfq.status === 'draft' && <ProcessRfqButton rfqId={rfq.id} userCredits={credits} />}
+            {rfq.status === 'draft' ? (
+              <ProcessRfqButton rfqId={rfq.id} userCredits={credits} />
+            ) : rfq.status !== 'rfqs_sent' && rfq.status !== 'complete' ? (
+              <RfqStatusPoller rfqId={rfq.id} initialStatus={rfq.status} />
+            ) : null}
           </div>
           <div className="flex items-start">
             {STATUS_STEPS.map((step, i) => {
@@ -301,8 +306,39 @@ export default async function RfqPage({ params }: Props) {
           </dl>
         </div>
 
-        {/* Quotes: waiting state or comparison table */}
-        {quotes.length === 0 ? (
+        {/* Quotes: status-based display */}
+        {rfq.status === 'rfqs_sent' ? (
+          <div className="bg-white border border-[#e8e8e2] rounded-2xl p-12 text-center">
+            <div className="w-14 h-14 bg-[#eaf3ef] rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-7 h-7 text-[#1a6b4a]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+              </svg>
+            </div>
+            <h3 className="text-base font-semibold text-[#1a1a18] mb-2">
+              RFQs sent{quotes.length > 0 ? ` to ${quotes.length} supplier${quotes.length !== 1 ? 's' : ''}` : ''} — waiting for responses
+            </h3>
+            <p className="text-sm text-[#8a8a82] max-w-sm mx-auto leading-relaxed">
+              Quotes typically arrive within 24–48 hours. A full comparison table will appear here once suppliers respond.
+            </p>
+            <p className="text-xs text-[#8a8a82] mt-3">
+              Submitted {submittedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+              {' '}· Est. complete by{' '}
+              {estimatedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+            </p>
+          </div>
+        ) : rfq.status !== 'complete' ? (
+          <div className="bg-white border border-[#e8e8e2] rounded-2xl p-12 text-center">
+            <div className="w-14 h-14 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-7 h-7 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-base font-semibold text-[#1a1a18] mb-2">Processing your RFQ</h3>
+            <p className="text-sm text-[#8a8a82] max-w-sm mx-auto leading-relaxed">
+              Finding suppliers and generating outreach emails. This takes 60–90 seconds.
+            </p>
+          </div>
+        ) : quotes.length === 0 ? (
           <div className="bg-white border border-[#e8e8e2] rounded-2xl p-12 text-center">
             <div className="w-14 h-14 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-7 h-7 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
