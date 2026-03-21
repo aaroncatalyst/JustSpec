@@ -153,7 +153,7 @@ export default function SpecForm() {
           additional_notes:
             (formData.get('additional_notes') as string) || null,
           file_urls: fileUrls.length > 0 ? fileUrls : null,
-          status: 'draft',
+          status: 'suppliers_identified',
         })
         .select('id')
         .single()

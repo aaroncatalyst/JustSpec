@@ -3,6 +3,7 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import ProcessRfqButton from '@/components/ProcessRfqButton'
 import RfqStatusPoller from '@/components/RfqStatusPoller'
+import SampleReportPreview from '@/components/SampleReportPreview'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -308,24 +309,27 @@ export default async function RfqPage({ params }: Props) {
 
         {/* Quotes: status-based display */}
         {rfq.status === 'rfqs_sent' ? (
-          <div className="bg-white border border-[#e8e8e2] rounded-2xl p-12 text-center">
-            <div className="w-14 h-14 bg-[#eaf3ef] rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-7 h-7 text-[#1a6b4a]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-              </svg>
+          <>
+            <div className="bg-white border border-[#e8e8e2] rounded-2xl p-12 text-center">
+              <div className="w-14 h-14 bg-[#eaf3ef] rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-7 h-7 text-[#1a6b4a]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                </svg>
+              </div>
+              <h3 className="text-base font-semibold text-[#1a1a18] mb-2">
+                RFQs sent{quotes.length > 0 ? ` to ${quotes.length} supplier${quotes.length !== 1 ? 's' : ''}` : ''} — waiting for responses
+              </h3>
+              <p className="text-sm text-[#8a8a82] max-w-sm mx-auto leading-relaxed">
+                Quotes typically arrive within 24–48 hours. A full comparison table will appear here once suppliers respond.
+              </p>
+              <p className="text-xs text-[#8a8a82] mt-3">
+                Submitted {submittedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+                {' '}· Est. complete by{' '}
+                {estimatedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+              </p>
             </div>
-            <h3 className="text-base font-semibold text-[#1a1a18] mb-2">
-              RFQs sent{quotes.length > 0 ? ` to ${quotes.length} supplier${quotes.length !== 1 ? 's' : ''}` : ''} — waiting for responses
-            </h3>
-            <p className="text-sm text-[#8a8a82] max-w-sm mx-auto leading-relaxed">
-              Quotes typically arrive within 24–48 hours. A full comparison table will appear here once suppliers respond.
-            </p>
-            <p className="text-xs text-[#8a8a82] mt-3">
-              Submitted {submittedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
-              {' '}· Est. complete by{' '}
-              {estimatedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
-            </p>
-          </div>
+            <SampleReportPreview collapsible />
+          </>
         ) : rfq.status !== 'complete' ? (
           <div className="bg-white border border-[#e8e8e2] rounded-2xl p-12 text-center">
             <div className="w-14 h-14 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">

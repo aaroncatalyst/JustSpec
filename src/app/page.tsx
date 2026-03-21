@@ -1,6 +1,7 @@
 import Navbar from '@/components/Navbar'
 import SpecForm from '@/components/SpecForm'
 import PricingSection from '@/components/PricingSection'
+import SampleReportPreview from '@/components/SampleReportPreview'
 
 export default function Home() {
   return (
@@ -9,6 +10,7 @@ export default function Home() {
       <main>
         <HeroSection />
         <HowItWorksSection />
+        <WhatYouGetSection />
         <PricingSection />
         <SpecFormSection />
         <Footer />
@@ -139,6 +141,30 @@ function HowItWorksSection() {
   )
 }
 
+
+function WhatYouGetSection() {
+  return (
+    <section id="sample-report" className="bg-[#fafaf7] border-y border-[#e8e8e2] py-20">
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold text-[#1a1a18] mb-3">What you&apos;ll get</h2>
+          <p className="text-[#8a8a82] max-w-md mx-auto">
+            A structured comparison table ranking every supplier by landed cost — ready to act on in minutes.
+          </p>
+        </div>
+        <div className="bg-white border border-[#e8e8e2] rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="text-xs font-semibold text-[#8a8a82] uppercase tracking-wider">
+              Sample Supplier Quotes — 5 responses
+            </h3>
+            <span className="text-xs text-[#8a8a82]">Ranked by landed cost</span>
+          </div>
+          <SampleReportPreview />
+        </div>
+      </div>
+    </section>
+  )
+}
 
 function SpecFormSection() {
   return (
