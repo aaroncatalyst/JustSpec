@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 
 interface PriceTier {
   quantity: number
@@ -41,6 +40,15 @@ interface RFQ {
   loadingQuotes?: boolean
 }
 
+const ADMIN_PASSWORD = 'justspec2026'
+
+function adminHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'X-Admin-Password': ADMIN_PASSWORD,
+  }
+}
+
 export default function AdminPage() {
   const [password, setPassword] = useState('')
   const [authenticated, setAuthenticated] = useState(false)
@@ -54,11 +62,9 @@ export default function AdminPage() {
   const [parseErrors, setParseErrors] = useState<Record<string, string>>({})
   const [completingRfq, setCompletingRfq] = useState<Set<string>>(new Set())
 
-  const supabase = createClient()
-
   function handlePasswordSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (password === 'justspec2026') {
+    if (password === ADMIN_PASSWORD) {
       setAuthenticated(true)
       setAuthError('')
       fetchRfqs()
@@ -69,12 +75,11 @@ export default function AdminPage() {
 
   async function fetchRfqs() {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('rfqs')
-      .select('*')
-      .in('status', ['rfqs_sent', 'awaiting_responses'])
-      .order('created_at', { ascending: false })
-    if (!error && data) setRfqs(data)
+    const res = await fetch('/api/admin/rfqs', { headers: adminHeaders() })
+    if (res.ok) {
+      const data = await res.json()
+      setRfqs(data)
+    }
     setLoading(false)
   }
 
@@ -88,15 +93,11 @@ export default function AdminPage() {
     next.add(rfq.id)
     setExpandedRfqs(next)
 
-    // Load quotes if not yet loaded
     if (!rfq.quotes) {
       setRfqs(prev => prev.map(r => r.id === rfq.id ? { ...r, loadingQuotes: true } : r))
-      const { data } = await supabase
-        .from('quotes')
-        .select('*')
-        .eq('rfq_id', rfq.id)
-        .order('created_at' as never, { ascending: true })
-      setRfqs(prev => prev.map(r => r.id === rfq.id ? { ...r, quotes: data ?? [], loadingQuotes: false } : r))
+      const res = await fetch(`/api/admin/quotes?rfq_id=${rfq.id}`, { headers: adminHeaders() })
+      const data = res.ok ? await res.json() : []
+      setRfqs(prev => prev.map(r => r.id === rfq.id ? { ...r, quotes: data, loadingQuotes: false } : r))
     }
   }
 
@@ -110,10 +111,7 @@ export default function AdminPage() {
     try {
       const res = await fetch('/api/admin/parse-response', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Password': 'justspec2026',
-        },
+        headers: adminHeaders(),
         body: JSON.stringify({ quote_id: quoteId, raw_email: rawEmail }),
       })
       if (!res.ok) {
@@ -125,8 +123,9 @@ export default function AdminPage() {
       // Refresh quotes for this RFQ
       const rfq = rfqs.find(r => r.quotes?.some(q => q.id === quoteId))
       if (rfq) {
-        const { data: quotes } = await supabase.from('quotes').select('*').eq('rfq_id', rfq.id)
-        setRfqs(prev => prev.map(r => r.id === rfq.id ? { ...r, quotes: quotes ?? [] } : r))
+        const quotesRes = await fetch(`/api/admin/quotes?rfq_id=${rfq.id}`, { headers: adminHeaders() })
+        const quotes = quotesRes.ok ? await quotesRes.json() : []
+        setRfqs(prev => prev.map(r => r.id === rfq.id ? { ...r, quotes } : r))
       }
     } catch (err) {
       setParseErrors(prev => ({ ...prev, [quoteId]: (err as Error).message }))
@@ -137,10 +136,11 @@ export default function AdminPage() {
 
   async function markComplete(rfqId: string) {
     setCompletingRfq(prev => new Set(prev).add(rfqId))
-    await supabase
-      .from('rfqs')
-      .update({ status: 'complete', completed_at: new Date().toISOString() })
-      .eq('id', rfqId)
+    await fetch('/api/admin/complete-rfq', {
+      method: 'POST',
+      headers: adminHeaders(),
+      body: JSON.stringify({ rfq_id: rfqId }),
+    })
     setRfqs(prev => prev.filter(r => r.id !== rfqId))
     setCompletingRfq(prev => { const n = new Set(prev); n.delete(rfqId); return n })
   }
