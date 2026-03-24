@@ -11,7 +11,7 @@ const STATUS_STEPS = [
 ]
 
 const POLL_INTERVAL_MS = 5000
-const TIMEOUT_MS = 3 * 60 * 1000
+const TIMEOUT_MS = 5 * 60 * 1000
 
 interface Props {
   rfqId: string
@@ -67,7 +67,7 @@ export default function RfqStatusPoller({ rfqId, initialStatus }: Props) {
       <div className="flex flex-col gap-1">
         <p className="text-xs text-gray-500">Taking longer than expected — check back in a few minutes.</p>
         <button
-          onClick={() => router.refresh()}
+          onClick={() => window.location.reload()}
           className="self-start text-xs text-[#1a6b4a] underline hover:no-underline"
         >
           Refresh now

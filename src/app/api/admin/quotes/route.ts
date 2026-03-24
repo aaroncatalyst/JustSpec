@@ -25,7 +25,6 @@ export async function GET(request: NextRequest) {
     .from('quotes')
     .select('*')
     .eq('rfq_id', rfqId)
-    .order('created_at', { ascending: true })
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
