@@ -21,4 +21,16 @@ body {
   --color-mid: #8a8a82;
   --color-light: #e8e8e2;
   --color-accent-light: #eaf3ef;
+  --color-warm: #f5f0e8;
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
