@@ -50,7 +50,7 @@ export default function RfqStatusPoller({ rfqId, initialStatus }: Props) {
 
       if (data.status === 'rfqs_sent' || data.status === 'complete') {
         stopPolling()
-        router.refresh()
+        window.location.reload()
       }
     }, POLL_INTERVAL_MS)
 
