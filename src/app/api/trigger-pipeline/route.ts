@@ -38,17 +38,32 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'RFQ not found' }, { status: 404 })
   }
 
-  // Fire-and-forget: don't await the pipeline response — it takes 60+ seconds
-  // and Vercel functions timeout at ~10-15s. FastAPI updates Supabase as it progresses.
-  fetch(`${pipelineUrl}/api/process-rfq`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      rfq_id,
-      supabase_url: supabaseUrl,
-      supabase_service_key: serviceKey,
-    }),
-  }).catch(err => console.error('Pipeline fire-and-forget error:', err))
+  // Await the fetch with a 5s timeout — ensures the request is fully sent to Railway
+  // before returning, but doesn't wait for the 90s pipeline response.
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 5000)
+
+  try {
+    await fetch(`${pipelineUrl}/api/process-rfq`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        rfq_id,
+        supabase_url: supabaseUrl,
+        supabase_service_key: serviceKey,
+      }),
+      signal: controller.signal,
+    })
+  } catch (err) {
+    // AbortError is expected — we intentionally timeout after 5s
+    // Any other error means the request didn't reach Railway
+    if (err instanceof Error && err.name !== 'AbortError') {
+      console.error('Pipeline trigger failed:', err)
+      return NextResponse.json({ error: 'Failed to trigger pipeline' }, { status: 500 })
+    }
+  } finally {
+    clearTimeout(timeout)
+  }
 
   return NextResponse.json({ status: 'processing' })
 }
