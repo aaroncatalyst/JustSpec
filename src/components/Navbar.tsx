@@ -23,6 +23,9 @@ export default function Navbar() {
           <Link href="#pricing" className="hover:text-[#1a1a18] transition-colors">
             Pricing
           </Link>
+          <Link href="/blog" className="hover:text-[#1a1a18] transition-colors">
+            Guides
+          </Link>
           <Link href="/login" className="hover:text-[#1a1a18] transition-colors">
             Sign in
           </Link>
@@ -66,6 +69,9 @@ export default function Navbar() {
           </Link>
           <Link href="#pricing" className="text-[#8a8a82] hover:text-[#1a1a18]" onClick={() => setMenuOpen(false)}>
             Pricing
+          </Link>
+          <Link href="/blog" className="text-[#8a8a82] hover:text-[#1a1a18]" onClick={() => setMenuOpen(false)}>
+            Guides
           </Link>
           <Link href="/login" className="text-[#8a8a82] hover:text-[#1a1a18]" onClick={() => setMenuOpen(false)}>
             Sign in
