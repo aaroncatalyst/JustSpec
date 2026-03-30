@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { fireConversion, trackEvent } from '@/lib/gtag'
 import Link from 'next/link'
 
 const CATEGORIES = [
@@ -43,6 +44,8 @@ export default function SpecForm() {
   const [noCredits, setNoCredits] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [confirmLoading, setConfirmLoading] = useState(false)
+  // True when this will be the user's first (free) RFQ — no credit card needed
+  const [isFreeEligible, setIsFreeEligible] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
 
@@ -79,7 +82,7 @@ export default function SpecForm() {
     addFiles(e.dataTransfer.files)
   }, [])
 
-  // Step 1: validate auth + credits, then show confirmation dialog
+  // Step 1: validate auth + credits/free eligibility, then show confirmation dialog
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError(null)
@@ -93,13 +96,18 @@ export default function SpecForm() {
       return
     }
 
-    const { data: userData } = await supabase
-      .from('users')
-      .select('rfq_credits')
-      .eq('id', user.id)
-      .single()
+    // Fetch plan + credits, and count of prior RFQs in parallel
+    const [{ data: userData }, { count: rfqCount }] = await Promise.all([
+      supabase.from('users').select('rfq_credits, plan').eq('id', user.id).single(),
+      supabase.from('rfqs').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+    ])
 
-    if (!userData || userData.rfq_credits <= 0) {
+    // Free eligible = free plan AND no prior RFQs ever submitted
+    const freeEligible = userData?.plan === 'free' && (rfqCount ?? 0) === 0
+    setIsFreeEligible(freeEligible)
+
+    // If not free eligible and out of paid credits, prompt upgrade
+    if (!freeEligible && (!userData || userData.rfq_credits <= 0)) {
       setNoCredits(true)
       return
     }
@@ -153,6 +161,7 @@ export default function SpecForm() {
           additional_notes:
             (formData.get('additional_notes') as string) || null,
           file_urls: fileUrls.length > 0 ? fileUrls : null,
+          is_free: isFreeEligible,
           status: 'suppliers_identified',
         })
         .select('id')
@@ -162,8 +171,14 @@ export default function SpecForm() {
 
       const rfqId = rfqData.id
 
-      // Deduct credit
-      await supabase.rpc('decrement_credits', { uid: user.id })
+      // Only deduct a credit for paid submissions — free tier has no credit cost
+      if (!isFreeEligible) {
+        await supabase.rpc('decrement_credits', { uid: user.id })
+      }
+
+      // Conversion tracking — fire before navigation so the beacon has time to send
+      fireConversion(isFreeEligible ? 0 : 39.0)
+      trackEvent('spec_submitted', { is_free: isFreeEligible })
 
       // Fire-and-forget pipeline trigger
       fetch('/api/trigger-pipeline', {
@@ -187,10 +202,29 @@ export default function SpecForm() {
       {confirmOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
-            <h2 className="text-base font-semibold text-[#1a1a18] mb-2">Ready to submit?</h2>
-            <p className="text-sm text-[#8a8a82] mb-6 leading-relaxed">
-              This will use <span className="font-semibold text-[#1a1a18]">1 RFQ credit</span> and immediately start finding suppliers and sending outreach emails.
-            </p>
+            {isFreeEligible ? (
+              <>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xs font-semibold text-[#1a6b4a] bg-[#eaf3ef] px-2.5 py-1 rounded-full uppercase tracking-wider">
+                    Free report
+                  </span>
+                </div>
+                <h2 className="text-base font-semibold text-[#1a1a18] mb-2">
+                  Ready to get your free report?
+                </h2>
+                <p className="text-sm text-[#8a8a82] mb-6 leading-relaxed">
+                  We&apos;ll search up to <span className="font-semibold text-[#1a1a18]">5 US manufacturers</span> and email you a comparison report within 48 hours.{' '}
+                  <span className="text-[#1a6b4a] font-medium">No credit card needed.</span>
+                </p>
+              </>
+            ) : (
+              <>
+                <h2 className="text-base font-semibold text-[#1a1a18] mb-2">Ready to submit?</h2>
+                <p className="text-sm text-[#8a8a82] mb-6 leading-relaxed">
+                  This will use <span className="font-semibold text-[#1a1a18]">1 RFQ credit</span> and immediately start finding suppliers and sending outreach emails.
+                </p>
+              </>
+            )}
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmOpen(false)}
@@ -202,7 +236,7 @@ export default function SpecForm() {
                 onClick={handleConfirm}
                 className="flex-1 py-2.5 rounded-lg bg-[#1a6b4a] text-sm font-semibold text-white hover:bg-[#155a3d] transition-colors"
               >
-                Yes, submit
+                {isFreeEligible ? 'Get my free report' : 'Yes, submit'}
               </button>
             </div>
           </div>
@@ -210,6 +244,16 @@ export default function SpecForm() {
       )}
 
       <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-8">
+        {/* Free tier banner — always shown, sets expectations before submit */}
+        <div className="flex items-center gap-3 bg-[#eaf3ef] border border-[#1a6b4a]/20 rounded-lg px-4 py-3">
+          <svg className="w-4 h-4 text-[#1a6b4a] shrink-0" viewBox="0 0 16 16" fill="currentColor">
+            <path fillRule="evenodd" d="M12.707 4.293a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L7 8.586l4.293-4.293a1 1 0 011.414 0z" clipRule="evenodd" />
+          </svg>
+          <span className="text-sm text-[#1a6b4a] font-medium">
+            Your first report is free — no credit card required
+          </span>
+        </div>
+
         {/* Error banner */}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
@@ -503,9 +547,6 @@ export default function SpecForm() {
             'Submit spec & find suppliers'
           )}
         </button>
-        <p className="text-xs text-[#8a8a82] text-center -mt-4">
-          Your first RFQ is free. No credit card required.
-        </p>
       </form>
     </>
   )

@@ -1,6 +1,16 @@
 import type { Metadata } from 'next'
 import { DM_Sans, DM_Mono } from 'next/font/google'
+import Script from 'next/script'
 import './globals.css'
+
+// Google tag IDs — set in Vercel env vars, undefined in development
+const GA4_ID = process.env.NEXT_PUBLIC_GA4_ID
+const ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID
+
+// Primary measurement ID drives the gtag.js script src
+// (GA4 preferred; fall back to Ads-only if GA4 not configured)
+const PRIMARY_ID = GA4_ID ?? ADS_ID
+const IS_PRODUCTION = process.env.NODE_ENV === 'production'
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
@@ -28,6 +38,27 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${dmSans.variable} ${dmMono.variable}`}>
+      <head>
+        {IS_PRODUCTION && PRIMARY_ID && (
+          <>
+            {/* Load the gtag.js library — single script covers both GA4 and Google Ads */}
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${PRIMARY_ID}`}
+              strategy="afterInteractive"
+            />
+            {/* Initialise dataLayer and config each property */}
+            <Script id="gtag-init" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                ${GA4_ID ? `gtag('config', '${GA4_ID}');` : ''}
+                ${ADS_ID ? `gtag('config', '${ADS_ID}');` : ''}
+              `}
+            </Script>
+          </>
+        )}
+      </head>
       <body className="font-[family-name:var(--font-dm-sans)] antialiased bg-[#fafaf7] text-[#1a1a18]">
         {children}
       </body>

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import ProcessRfqButton from '@/components/ProcessRfqButton'
 import RfqStatusPoller from '@/components/RfqStatusPoller'
 import SampleReportPreview from '@/components/SampleReportPreview'
+import GtagEvent from '@/components/GtagEvent'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -311,6 +312,11 @@ export default async function RfqPage({ params }: Props) {
         {/* Quotes: status-based display */}
         {rfq.status === 'complete' && pricedQuotes.length > 0 ? (
           <div className="bg-white border border-[#e8e8e2] rounded-2xl p-6">
+            {/* Fire rfq_completed GA4 event once when user views their results */}
+            <GtagEvent
+              name="rfq_completed"
+              params={{ rfq_id: id, quote_count: pricedQuotes.length, is_free: rfq.is_free ?? false }}
+            />
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-xs font-semibold text-[#8a8a82] uppercase tracking-wider">
                 Supplier Quotes — {pricedQuotes.length} response{pricedQuotes.length !== 1 ? 's' : ''}
