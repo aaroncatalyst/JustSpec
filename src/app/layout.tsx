@@ -39,6 +39,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${dmSans.variable} ${dmMono.variable}`}>
       <head>
+        <meta name="google-site-verification" content="y3k3ecFf4e7chl-rrX_SNoEsG5YnYghGegPk2rFcvOg" />
         {IS_PRODUCTION && PRIMARY_ID && (
           <>
             {/* Load the gtag.js library — single script covers both GA4 and Google Ads */}
