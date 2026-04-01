@@ -346,7 +346,10 @@ function Footer() {
             Privacy
           </a>
           {' · '}
-          Built by Diversified Product Solutions, LLC
+          Catalyst Supply Co LLC ·{' '}
+          <a href="mailto:support@catalystsupply.co" className="hover:text-[#1a1a18] transition-colors">
+            support@catalystsupply.co
+          </a>
         </p>
         <a
           href="https://justspec.co"
