@@ -35,6 +35,7 @@ const INPUT_CLASS =
 export default function SpecForm() {
   const router = useRouter()
   const [quantities, setQuantities] = useState<string[]>(['', '', ''])
+  const [supplierRegion, setSupplierRegion] = useState<string>('Both')
   const [compliance, setCompliance] = useState<string[]>([])
   const [referenceLinks, setReferenceLinks] = useState<string[]>([''])
   const [files, setFiles] = useState<File[]>([])
@@ -155,7 +156,7 @@ export default function SpecForm() {
           quantities: quantityValues.length > 0 ? quantityValues : null,
           destination_country:
             (formData.get('destination_country') as string) || 'US',
-          supplier_region: (formData.get('supplier_region') as string) || null,
+          supplier_region: isFreeEligible ? 'US' : supplierRegion,
           compliance: compliance.length > 0 ? compliance : null,
           reference_links: links.length > 0 ? links : null,
           additional_notes:
@@ -221,7 +222,13 @@ export default function SpecForm() {
               <>
                 <h2 className="text-base font-semibold text-[#1a1a18] mb-2">Ready to submit?</h2>
                 <p className="text-sm text-[#8a8a82] mb-6 leading-relaxed">
-                  This will use <span className="font-semibold text-[#1a1a18]">1 RFQ credit</span> and immediately start finding suppliers and sending outreach emails.
+                  This will use <span className="font-semibold text-[#1a1a18]">1 RFQ credit</span> and immediately start finding{' '}
+                  {supplierRegion === 'US'
+                    ? 'up to 15 US manufacturers'
+                    : supplierRegion === 'China'
+                    ? 'up to 15 Chinese manufacturers'
+                    : 'up to 15 manufacturers from the US and China'}{' '}
+                  and sending outreach emails.
                 </p>
               </>
             )}
@@ -345,31 +352,18 @@ export default function SpecForm() {
           </div>
         </div>
 
-        {/* Destination + Supplier region */}
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-[#1a1a18]">
-              Destination country
-            </label>
-            <input
-              type="text"
-              name="destination_country"
-              defaultValue="US"
-              placeholder="US"
-              className={INPUT_CLASS}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-[#1a1a18]">
-              Preferred supplier region
-            </label>
-            <input
-              type="text"
-              name="supplier_region"
-              placeholder="e.g. China, Southeast Asia, Europe..."
-              className={INPUT_CLASS}
-            />
-          </div>
+        {/* Destination country */}
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-semibold text-[#1a1a18]">
+            Destination country
+          </label>
+          <input
+            type="text"
+            name="destination_country"
+            defaultValue="US"
+            placeholder="US"
+            className={`${INPUT_CLASS} max-w-xs`}
+          />
         </div>
 
         {/* Compliance checkboxes */}
@@ -512,6 +506,29 @@ export default function SpecForm() {
             placeholder="Packaging requirements, branding preferences, sample needs, timeline constraints..."
             className={`${INPUT_CLASS} resize-none`}
           />
+        </div>
+
+        {/* Supplier region */}
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-semibold text-[#1a1a18]">
+            Where should we look for manufacturers?
+          </label>
+          <select
+            name="supplier_region"
+            value={isFreeEligible ? 'US' : supplierRegion}
+            onChange={(e) => setSupplierRegion(e.target.value)}
+            disabled={isFreeEligible}
+            className={`${INPUT_CLASS} appearance-none cursor-pointer ${isFreeEligible ? 'opacity-50 cursor-not-allowed bg-[#f8f8f4]' : ''}`}
+          >
+            <option value="Both">US &amp; China (recommended)</option>
+            <option value="US">United States only</option>
+            <option value="China">China only</option>
+          </select>
+          <p className="text-xs text-[#8a8a82]">
+            {isFreeEligible
+              ? 'Free reports include US manufacturers only. Upgrade to search China too.'
+              : 'Free reports include up to 5 US manufacturers. Paid reports include up to 15 from your selected region.'}
+          </p>
         </div>
 
         <button
