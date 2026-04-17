@@ -156,7 +156,7 @@ export default function SpecForm() {
           quantities: quantityValues.length > 0 ? quantityValues : null,
           destination_country:
             (formData.get('destination_country') as string) || 'US',
-          supplier_region: isFreeEligible ? 'US' : supplierRegion,
+          supplier_region: isFreeEligible ? 'China' : supplierRegion,
           compliance: compliance.length > 0 ? compliance : null,
           reference_links: links.length > 0 ? links : null,
           additional_notes:
@@ -214,7 +214,7 @@ export default function SpecForm() {
                   Ready to get your free report?
                 </h2>
                 <p className="text-sm text-[#8a8a82] mb-6 leading-relaxed">
-                  We&apos;ll search up to <span className="font-semibold text-[#1a1a18]">5 US manufacturers</span> and email you a comparison report within 48 hours.{' '}
+                  We&apos;ll search up to <span className="font-semibold text-[#1a1a18]">5 manufacturers</span> and email you a comparison report within 48 hours.{' '}
                   <span className="text-[#1a6b4a] font-medium">No credit card needed.</span>
                 </p>
               </>
@@ -515,7 +515,7 @@ export default function SpecForm() {
           </label>
           <select
             name="supplier_region"
-            value={isFreeEligible ? 'US' : supplierRegion}
+            value={isFreeEligible ? 'China' : supplierRegion}
             onChange={(e) => setSupplierRegion(e.target.value)}
             disabled={isFreeEligible}
             className={`${INPUT_CLASS} appearance-none cursor-pointer ${isFreeEligible ? 'opacity-50 cursor-not-allowed bg-[#f8f8f4]' : ''}`}
@@ -526,8 +526,8 @@ export default function SpecForm() {
           </select>
           <p className="text-xs text-[#8a8a82]">
             {isFreeEligible
-              ? 'Free reports include US manufacturers only. Upgrade to search China too.'
-              : 'Free reports include up to 5 US manufacturers. Paid reports include up to 15 from your selected region.'}
+              ? 'Free reports source from China manufacturers. Upgrade to search US suppliers too.'
+              : 'Paid reports include up to 15 suppliers from your selected region.'}
           </p>
         </div>
 

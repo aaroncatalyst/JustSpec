@@ -115,7 +115,7 @@ export default function PricingSection() {
             <ul className="flex flex-col gap-2.5 flex-1">
               {[
                 '1 RFQ submission',
-                'Up to 5 US manufacturers',
+                'Up to 5 manufacturers',
                 'Basic comparison report',
                 'Email delivery',
               ].map((f) => (
