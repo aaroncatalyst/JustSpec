@@ -1,0 +1,200 @@
+---
+title: "How to Calculate Landed Cost from China (Step-by-Step)"
+slug: "how-to-calculate-landed-cost-from-china"
+description: "Step-by-step landed cost calculation for Chinese imports — FOB price, freight, duties, customs fees, and hidden costs most importers miss."
+publishedAt: "2026-04-17"
+category: "tariffs-trade"
+keywords: ["landed cost from china", "landed cost calculation", "import cost calculator", "total landed cost china", "how to calculate import duties"]
+---
+
+Landed cost is the only number that matters for an importer's margin calculation — not FOB, not CIF, not the price you negotiated with the factory. Landed cost is what those goods actually cost you by the time they're sitting in your warehouse ready to ship to a customer. The gap between FOB and landed cost is where most new importers get surprised, and getting it wrong means every margin model you build is wrong.
+
+The framework: **Landed Cost = FOB + China-side costs + Ocean freight + Insurance + Import duties + Customs fees + US-side port costs + Domestic freight + Receiving/handling**
+
+We'll work through each component with a specific example: 5,000 units of a consumer plastic product, $3.50 FOB Shenzhen, shipping to a warehouse in Los Angeles.
+
+## The Example Product
+
+5,000 units × $3.50 FOB = **$17,500 total FOB value**
+
+HTS code: 3924.10 (tableware and kitchenware of plastics) — this category carries MFN rate of 6.4%, Section 301 List 3 at 25%, and IEEPA at approximately 20%. Combined rate: 51.4%. This is the rate we'll use for the example, but [verify your specific HTS code at lgistics.ai](https://lgistics.ai) before using any number for a real decision.
+
+## Step 1: FOB Price — What It Does and Doesn't Include
+
+FOB (Free On Board) means the factory price plus the cost to get the goods to the named port of export — typically the loading of goods onto the vessel. What FOB includes:
+- Factory cost and margin
+- Domestic Chinese trucking from factory to port
+- Export customs clearance in China
+- Terminal handling at the Chinese port (in most FOB quotes)
+
+What FOB does not include:
+- Ocean freight (your cost once goods are on the water)
+- Insurance
+- US import duties
+- US customs clearance
+- Domestic US freight
+
+Some suppliers quote EXW (ex-works) rather than FOB — that puts the China-side freight and export clearance costs on you. Get FOB quotes, not EXW, unless you have a freight forwarder managing China-side logistics.
+
+For our example: **$3.50/unit, $17,500 total.**
+
+## Step 2: Origin Charges (China-Side)
+
+If your supplier quotes true FOB (loaded on vessel), origin charges are your supplier's problem. But two scenarios change this:
+
+**EXW quote:** You're responsible for factory-to-port freight and export clearance. China domestic trucking from Shenzhen to Yantian port for a standard LCL shipment: $200-350. Export customs filing: $80-150. Add these if buying EXW.
+
+**Destination port additional fees:** Some FOB quotes exclude the origin terminal handling charge (OTHC) — a fee charged by the terminal for loading onto the vessel. Typical OTHC: $50-150 per container or proportional for LCL. Clarify with your freight forwarder.
+
+For our example (true FOB, no additional origin charges): **$0/unit additional.**
+
+## Step 3: Ocean Freight
+
+5,000 units of plastic kitchenware — let's say each unit is roughly 12×12×8cm and weighs 0.25kg. At 12 units per inner carton and 48 per master carton, the shipment is approximately 104 master cartons, roughly 6 CBM.
+
+Current LCL rate, Shenzhen to Los Angeles: $65-90 per CBM. At 6 CBM × $75: **$450 ocean freight.**
+
+Per unit: **$0.09**
+
+If this were a full container load (FCL) scenario, you'd divide the FCL rate by total units. A 20-foot container from Shenzhen to Los Angeles currently runs $1,800-2,800 depending on carrier and timing. A 40-foot: $2,400-3,800. At those rates, FCL breaks even with LCL around 15-20 CBM — below that, LCL is usually cheaper.
+
+## Step 4: Cargo Insurance
+
+Marine cargo insurance is 0.3-0.8% of cargo value. Standard rate for general merchandise with a reputable forwarder: roughly 0.45%. On $17,500 cargo value: $79.
+
+Per unit: **$0.016**
+
+Insurance is technically optional, but any shipment over $3,000 should be insured. One container incident — uncommon but not rare — eliminates the margin on years of orders. Get the insurance.
+
+## Step 5: Import Duties
+
+This is the largest single component for most China imports in 2026.
+
+**Dutiable value calculation:**
+Customs uses the transaction value (what you paid the supplier) as the basis for duties. For ocean freight, CBP typically uses either FOB or CIF depending on how it's declared — FOB valuation is common for formal entries.
+
+Dutiable value (simplified to FOB): $17,500
+
+Combined tariff rate: 51.4% (MFN 6.4% + Section 301 25% + IEEPA 20%)
+
+**Import duties = $17,500 × 0.514 = $8,995**
+
+Per unit: **$1.80**
+
+This is the number that breaks margin models. A $3.50 FOB unit with a 51.4% combined rate generates $1.80 in duties alone. If you were pricing this product at $7.99 retail with 3.5× FOB as your mental model for landed cost, you need to rebuild that model.
+
+Important: the 51.4% rate in this example is specific to HTS 3924.10 and the current IEEPA rate. Your product's combined rate could be materially different — 30% for some categories, 80%+ for products with AD/CVD on top. [Check your actual rate](https://lgistics.ai).
+
+## Step 6: Merchandise Processing Fee (MPF)
+
+The MPF is a CBP user fee assessed on all formal entries (shipments over $2,500). Rate: **0.3464%** of cargo value, minimum $31.67, maximum $575.35.
+
+On $17,500: $17,500 × 0.003464 = $60.62
+
+Per unit: **$0.012**
+
+## Step 7: Harbor Maintenance Fee (HMF)
+
+The HMF funds US port maintenance. Rate: **0.125%** of cargo value.
+
+On $17,500: $17,500 × 0.00125 = $21.88
+
+Per unit: **$0.004**
+
+## Step 8: Customs Bond
+
+Formal entries (over $2,500) require a customs bond. Two options:
+
+- **Single-entry bond:** Approximately 0.5% of total duties + duties + fees, minimum $50. On $8,995 in duties, that's roughly $45-55 for the bond itself.
+- **Continuous bond:** $500-600/year covers unlimited entries regardless of value. If you're doing more than 2-3 shipments per year from China, a continuous bond is economical.
+
+For our example (single-entry): **$55 total, $0.011/unit**
+
+## Step 9: Customs Brokerage
+
+A licensed customs broker files the import entry with CBP. Standard fee for a routine entry: $150-250. Complex entries (FDA involvement, multiple classifications, AD/CVD questions) run higher.
+
+For our example: **$175, $0.035/unit**
+
+## Step 10: Destination Port / Drayage Charges
+
+LCL cargo arriving at a US port has additional charges before it gets to your warehouse:
+
+- **Deconsolidation fee:** The LCL consolidation is unpacked at a Container Freight Station (CFS). Typical fee: $80-150.
+- **Chassis fee** (if applicable): For FCL, you rent the chassis that carries the container from port to destination. ~$25-50/day.
+- **Port congestion / peak season surcharges:** Variable, can add $50-200 during high-demand periods.
+
+For our LCL example: **$125 total, $0.025/unit**
+
+## Step 11: ISF Filing Fee
+
+The Importer Security Filing (ISF, or "10+2") must be filed with CBP at least 24 hours before cargo loads at the foreign port. Your freight forwarder usually handles this. Fee: $25-50 per shipment.
+
+For our example: **$35, $0.007/unit**
+
+## Step 12: Domestic Freight (Port to Warehouse)
+
+Final delivery from the port CFS to your warehouse. For LCL cargo near the port, this is typically a local delivery:
+
+- Within 50 miles of port: $150-300
+- 50-150 miles: $200-400
+- Cross-country: $500-900 LTL
+
+Los Angeles warehouse within 30 miles of port: **$200, $0.04/unit**
+
+## Step 13: 3PL Receiving and Put-Away
+
+If you're using a third-party warehouse, receiving charges apply:
+- Per-carton: $0.25-0.50/carton
+- Per-pallet: $6-12
+- Labor minimum: often $50-100 regardless of size
+
+104 cartons at $0.35/carton: **$36, $0.007/unit**
+
+## Complete Landed Cost Summary
+
+| Component | Per Unit | Total |
+|---|---|---|
+| FOB factory price | $3.50 | $17,500 |
+| Ocean freight | $0.090 | $450 |
+| Cargo insurance | $0.016 | $79 |
+| Import duties (51.4%) | $1.799 | $8,995 |
+| MPF (0.3464%) | $0.012 | $61 |
+| HMF (0.125%) | $0.004 | $22 |
+| Customs bond | $0.011 | $55 |
+| Customs brokerage | $0.035 | $175 |
+| Port / deconsolidation | $0.025 | $125 |
+| ISF filing | $0.007 | $35 |
+| Domestic freight | $0.040 | $200 |
+| 3PL receiving | $0.007 | $36 |
+| **Total landed cost** | **$5.55** | **$27,733** |
+
+The $3.50 FOB unit costs **$5.55 landed** — a 59% premium over FOB. Duties alone represent $1.80, or 32% of total landed cost.
+
+## The "2x Rule" — When It Applies and When It Doesn't
+
+The rough rule-of-thumb that landed cost is "about 2x FOB" was a reasonable approximation when combined China tariff rates were 10-15%. At current rates of 30-50%+ for most Chinese goods, the 2x rule understates landed cost significantly. For this example, landed cost is 1.6x FOB — not 2x — but that's because duties are already 0.51x FOB by themselves, and the 2x rule assumed lower duties with more overhead.
+
+Use the actual calculation. The 2x rule will mislead you.
+
+## Hidden Costs Most Importers Miss
+
+**Demurrage and detention:** If your goods sit at the port past the free-time window (typically 3-5 days for LCL), you pay demurrage (storage at the terminal) and detention (chassis rental beyond free time). These fees escalate quickly — $75-150/day for LCL storage at a congested port.
+
+**Quality inspection:** Third-party inspection before shipment (AQL inspection) costs $300-500 per visit. If you're doing pre-shipment inspection on every order — which you should be for new suppliers — budget $0.06-0.10/unit for small orders.
+
+**Rework and defects:** If 2-3% of goods fail and need to be scrapped or reworked, that cost is absorbed across the remaining units. On this shipment, 3% failure = 150 units × $3.50 = $525 absorbed into the remaining 4,850 units = $0.11/unit additional cost.
+
+**Sample costs:** Early in a supplier relationship, sample charges and DHL shipping for samples ($40-120 per round) are a real line item before you amortize them across production orders.
+
+For the duty components specifically, see our [China tariffs guide](/blog/china-tariffs-2026-importers-guide) and the [Section 301 breakdown](/blog/section-301-tariff-rates-by-category-2026). For a more detailed version of this calculation with additional product examples, see our [landed cost calculator guide](/blog/landed-cost-calculator-importing-china).
+
+## What to Do With This Number
+
+The landed cost is your COGS floor for pricing. Work backwards from your target retail price and margin:
+
+- If retail is $12.99 and you need 55% gross margin, your landed cost ceiling is $12.99 × (1 - 0.55) = $5.85
+- Our $5.55 landed cost leaves $0.30 of cushion — tight, but technically workable
+- If you're selling through Amazon FBA, add FBA fees (~15-20% of revenue + $0.99-3.00 fulfillment per unit) and you're underwater
+
+This math is why product selection matters as much as supplier negotiation. A great supplier for a product with insufficient margin at current tariff rates is still a product with insufficient margin. Know your landed cost before you finalize any sourcing decision.
