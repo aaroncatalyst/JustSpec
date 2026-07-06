@@ -5,13 +5,18 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
 
+  // Only allow relative, same-origin destinations to avoid open-redirects.
+  const nextParam = searchParams.get('next')
+  const next = nextParam && nextParam.startsWith('/') ? nextParam : '/dashboard'
+
   if (code) {
     const supabase = await createClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
-      return NextResponse.redirect(`${origin}/dashboard`)
+      return NextResponse.redirect(`${origin}${next}`)
     }
   }
 
   return NextResponse.redirect(`${origin}/login`)
 }
+// magic-link + OAuth callback; honors ?next= for the RFQ submit flow

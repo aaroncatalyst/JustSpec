@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { fireConversion, trackEvent } from '@/lib/gtag'
+import { PENDING_RFQ_KEY, getEligibility, insertRfqAndStart, type RfqSpec } from '@/lib/rfq'
 import Link from 'next/link'
 
 const CATEGORIES = [
@@ -47,8 +48,41 @@ export default function SpecForm() {
   const [confirmLoading, setConfirmLoading] = useState(false)
   // True when this will be the user's first (free) RFQ — no credit card needed
   const [isFreeEligible, setIsFreeEligible] = useState(false)
+  // Auth state: null = unknown (still checking), true/false once resolved
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null)
+  const [email, setEmail] = useState('')
+  // Set once we've emailed a magic link to a logged-out visitor
+  const [otpSentTo, setOtpSentTo] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
+
+  // Resolve auth state on mount so we know whether to ask for an email
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data }) => setIsLoggedIn(!!data.user))
+  }, [])
+
+  // Collect the current form values into a serializable spec (no File objects)
+  const collectSpec = (isFree: boolean): RfqSpec => {
+    const formData = new FormData(formRef.current!)
+    const quantityValues = quantities
+      .map((q) => parseInt(q))
+      .filter((q) => !isNaN(q) && q > 0)
+    const links = referenceLinks.filter((l) => l.trim() !== '')
+    return {
+      product_description: (formData.get('product_description') as string) || '',
+      product_category: (formData.get('product_category') as string) || null,
+      material: (formData.get('material') as string) || null,
+      quantities: quantityValues.length > 0 ? quantityValues : null,
+      destination_country: (formData.get('destination_country') as string) || 'US',
+      supplier_region: isFree ? 'China' : supplierRegion,
+      compliance: compliance.length > 0 ? compliance : null,
+      reference_links: links.length > 0 ? links : null,
+      additional_notes: (formData.get('additional_notes') as string) || null,
+      file_urls: null,
+      is_free: isFree,
+    }
+  }
 
   const toggleCompliance = (id: string) => {
     setCompliance((prev) =>
@@ -92,23 +126,41 @@ export default function SpecForm() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
+    // Logged-out visitor: DON'T bounce them to signup and lose their spec.
+    // Save the spec locally, email a magic link, and finish on /submit-pending
+    // when they click it. The link click doubles as email verification.
     if (!user) {
-      router.push('/signup?message=Create+an+account+to+submit+your+spec')
+      const trimmedEmail = email.trim()
+      if (!trimmedEmail) {
+        setError('Enter your email so we can send your free report.')
+        return
+      }
+      setLoading(true)
+      try {
+        // Free by default for a first-time visitor; eligibility is re-checked
+        // server-side on return (existing users with no credits are handled there).
+        const spec = collectSpec(true)
+        window.localStorage.setItem(PENDING_RFQ_KEY, JSON.stringify(spec))
+        const emailRedirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent('/submit-pending')}`
+        const { error: otpError } = await supabase.auth.signInWithOtp({
+          email: trimmedEmail,
+          options: { emailRedirectTo },
+        })
+        if (otpError) throw otpError
+        trackEvent('rfq_email_submitted', {})
+        setOtpSentTo(trimmedEmail)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Could not send your link. Please try again.')
+      } finally {
+        setLoading(false)
+      }
       return
     }
 
-    // Fetch plan + credits, and count of prior RFQs in parallel
-    const [{ data: userData }, { count: rfqCount }] = await Promise.all([
-      supabase.from('users').select('rfq_credits, plan').eq('id', user.id).single(),
-      supabase.from('rfqs').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-    ])
-
-    // Free eligible = free plan AND no prior RFQs ever submitted
-    const freeEligible = userData?.plan === 'free' && (rfqCount ?? 0) === 0
+    // Logged-in: check eligibility, then show the confirmation dialog
+    const { freeEligible, credits } = await getEligibility(supabase, user.id)
     setIsFreeEligible(freeEligible)
-
-    // If not free eligible and out of paid credits, prompt upgrade
-    if (!freeEligible && (!userData || userData.rfq_credits <= 0)) {
+    if (!freeEligible && credits <= 0) {
       setNoCredits(true)
       return
     }
@@ -126,10 +178,8 @@ export default function SpecForm() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setLoading(false); setConfirmLoading(false); return }
 
-    const formData = new FormData(formRef.current!)
-
     try {
-      // Upload files to Storage
+      // Upload any attachments to Storage first (logged-in path only)
       const fileUrls: string[] = []
       for (const file of files) {
         const path = `${user.id}/${Date.now()}-${file.name}`
@@ -140,53 +190,14 @@ export default function SpecForm() {
         fileUrls.push(path)
       }
 
-      const quantityValues = quantities
-        .map((q) => parseInt(q))
-        .filter((q) => !isNaN(q) && q > 0)
+      const spec = collectSpec(isFreeEligible)
+      spec.file_urls = fileUrls.length > 0 ? fileUrls : null
 
-      const links = referenceLinks.filter((l) => l.trim() !== '')
-
-      const { data: rfqData, error: insertError } = await supabase
-        .from('rfqs')
-        .insert({
-          user_id: user.id,
-          product_description: formData.get('product_description') as string,
-          product_category: (formData.get('product_category') as string) || null,
-          material: (formData.get('material') as string) || null,
-          quantities: quantityValues.length > 0 ? quantityValues : null,
-          destination_country:
-            (formData.get('destination_country') as string) || 'US',
-          supplier_region: isFreeEligible ? 'China' : supplierRegion,
-          compliance: compliance.length > 0 ? compliance : null,
-          reference_links: links.length > 0 ? links : null,
-          additional_notes:
-            (formData.get('additional_notes') as string) || null,
-          file_urls: fileUrls.length > 0 ? fileUrls : null,
-          is_free: isFreeEligible,
-          status: 'suppliers_identified',
-        })
-        .select('id')
-        .single()
-
-      if (insertError) throw insertError
-
-      const rfqId = rfqData.id
-
-      // Only deduct a credit for paid submissions — free tier has no credit cost
-      if (!isFreeEligible) {
-        await supabase.rpc('decrement_credits', { uid: user.id })
-      }
+      const rfqId = await insertRfqAndStart(supabase, user.id, spec)
 
       // Conversion tracking — fire before navigation so the beacon has time to send
       fireConversion(isFreeEligible ? 0 : 39.0)
-      trackEvent('spec_submitted', { is_free: isFreeEligible })
-
-      // Fire-and-forget pipeline trigger
-      fetch('/api/trigger-pipeline', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rfq_id: rfqId }),
-      }).catch(err => console.error('Pipeline trigger error:', err))
+      trackEvent('spec_submitted', { is_free: isFreeEligible, source: 'form' })
 
       // Redirect to the RFQ detail page where progress polling will show
       router.push(`/dashboard/rfq/${rfqId}`)
@@ -250,7 +261,35 @@ export default function SpecForm() {
         </div>
       )}
 
-      <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-8">
+      {/* Magic-link sent — the visitor's spec is saved and will submit on click */}
+      {otpSentTo && (
+        <div className="bg-white border border-[#1a6b4a]/20 rounded-2xl p-8 text-center">
+          <div className="bg-[#eaf3ef] text-[#1a6b4a] w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-[#1a1a18] mb-2">Check your email</h2>
+          <p className="text-sm text-[#8a8a82] leading-relaxed">
+            We saved your spec and sent a link to{' '}
+            <span className="font-semibold text-[#1a1a18]">{otpSentTo}</span>. Click it and your
+            free report starts instantly — no password needed.
+          </p>
+          <button
+            type="button"
+            onClick={() => setOtpSentTo(null)}
+            className="text-sm text-[#1a6b4a] font-medium hover:underline mt-6"
+          >
+            ← Edit your spec
+          </button>
+        </div>
+      )}
+
+      <form
+        ref={formRef}
+        onSubmit={handleSubmit}
+        className={`flex flex-col gap-8 ${otpSentTo ? 'hidden' : ''}`}
+      >
         {/* Free tier banner — always shown, sets expectations before submit */}
         <div className="flex items-center gap-3 bg-[#eaf3ef] border border-[#1a6b4a]/20 rounded-lg px-4 py-3">
           <svg className="w-4 h-4 text-[#1a6b4a] shrink-0" viewBox="0 0 16 16" fill="currentColor">
@@ -434,6 +473,11 @@ export default function SpecForm() {
           <label className="text-sm font-semibold text-[#1a1a18]">
             Attachments <span className="text-[#8a8a82] font-normal">(optional)</span>
           </label>
+          {isLoggedIn !== true && (
+            <p className="text-xs text-[#8a8a82] -mt-1">
+              You can add files to your report after you click the email link.
+            </p>
+          )}
           <div
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -530,6 +574,27 @@ export default function SpecForm() {
               : 'Paid reports include up to 15 suppliers from your selected region.'}
           </p>
         </div>
+
+        {/* Email — only asked of logged-out visitors, so a first submit needs
+            no separate signup page. We send a one-click magic link. */}
+        {isLoggedIn !== true && (
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-[#1a1a18]">
+              Your email <span className="text-[#1a6b4a]">*</span>
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@company.com"
+              autoComplete="email"
+              className={INPUT_CLASS}
+            />
+            <p className="text-xs text-[#8a8a82]">
+              We&apos;ll email your free report here. No password to create — just click the link we send.
+            </p>
+          </div>
+        )}
 
         <button
           type="submit"
