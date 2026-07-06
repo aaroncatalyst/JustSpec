@@ -26,6 +26,9 @@ const dmMono = DM_Mono({
 })
 
 export const metadata: Metadata = {
+  // Canonical host. Makes all canonical/OG URLs absolute + www, which resolves
+  // the GSC "Duplicate without user-selected canonical" flag.
+  metadataBase: new URL('https://www.justspec.co'),
   title: 'JustSpec — AI-Powered Sourcing Agent',
   description:
     'Submit a product spec. Get real supplier quotes in 48 hours. No cold emails, no sourcing agents.',

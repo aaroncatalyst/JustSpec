@@ -1,8 +1,13 @@
+import type { Metadata } from 'next'
 import Navbar from '@/components/Navbar'
 import SpecForm from '@/components/SpecForm'
 import PricingSection from '@/components/PricingSection'
 import SampleReportPreview from '@/components/SampleReportPreview'
 import FadeUp from '@/components/FadeUp'
+
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+}
 
 export default function Home() {
   return (

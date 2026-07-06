@@ -1,7 +1,9 @@
 import type { MetadataRoute } from 'next'
 import { getAllPosts } from '@/lib/blog'
 
-const BASE_URL = 'https://justspec.co'
+// Must match the canonical host (www) so the sitemap doesn't point Google at
+// URLs that immediately redirect — a cause of duplicate-canonical flags.
+const BASE_URL = 'https://www.justspec.co'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const posts = getAllPosts()

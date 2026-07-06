@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: 'Sourcing Guides & Resources | JustSpec',
   description:
     'Practical guides on China sourcing, US manufacturing, tariffs, and import strategy — from the team at JustSpec.',
+  alternates: { canonical: '/blog' },
 }
 
 export default function BlogIndexPage() {

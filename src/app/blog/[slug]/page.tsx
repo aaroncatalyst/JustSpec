@@ -77,10 +77,12 @@ export async function generateMetadata({
     title: `${post.title} | JustSpec`,
     description: post.description,
     keywords: post.keywords,
+    alternates: { canonical: `/blog/${slug}` },
     openGraph: {
       title: post.title,
       description: post.description,
       type: 'article',
+      url: `/blog/${slug}`,
       publishedTime: post.publishedAt,
     },
   }
@@ -117,7 +119,11 @@ export default async function ArticlePage({
     publisher: {
       '@type': 'Organization',
       name: 'JustSpec',
-      url: 'https://justspec.co',
+      url: 'https://www.justspec.co',
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `https://www.justspec.co/blog/${slug}`,
     },
     keywords: post.keywords.join(', '),
   }
