@@ -16,13 +16,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'rfq_id is required' }, { status: 400 })
   }
 
+  // The pipeline authenticates callers with a shared secret and uses its OWN
+  // Supabase credentials. Never send the service key over the wire (2026-09-17).
   const pipelineUrl = process.env.PIPELINE_API_URL
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const pipelineSecret = process.env.PIPELINE_SHARED_SECRET
 
-  if (!pipelineUrl || !serviceKey) {
+  if (!pipelineUrl || !pipelineSecret) {
     return NextResponse.json(
-      { error: 'Pipeline not configured — set PIPELINE_API_URL and SUPABASE_SERVICE_ROLE_KEY' },
+      { error: 'Pipeline not configured — set PIPELINE_API_URL and PIPELINE_SHARED_SECRET' },
       { status: 500 }
     )
   }
@@ -46,12 +47,11 @@ export async function POST(request: NextRequest) {
   try {
     await fetch(`${pipelineUrl}/api/process-rfq`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        rfq_id,
-        supabase_url: supabaseUrl,
-        supabase_service_key: serviceKey,
-      }),
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Pipeline-Secret': pipelineSecret,
+      },
+      body: JSON.stringify({ rfq_id }),
       signal: controller.signal,
     })
   } catch (err) {

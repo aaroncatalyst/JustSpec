@@ -37,21 +37,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'RFQ not found' }, { status: 404 })
   }
 
+  // Shared secret, and no Supabase credentials in the body (2026-09-17).
   const pipelineUrl = process.env.PIPELINE_API_URL
-  if (!pipelineUrl) {
-    return NextResponse.json({ error: 'PIPELINE_API_URL not configured' }, { status: 500 })
+  const pipelineSecret = process.env.PIPELINE_SHARED_SECRET
+  if (!pipelineUrl || !pipelineSecret) {
+    return NextResponse.json({ error: 'PIPELINE_API_URL / PIPELINE_SHARED_SECRET not configured' }, { status: 500 })
   }
 
   const upstream = await fetch(`${pipelineUrl}/api/parse-response`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Pipeline-Secret': pipelineSecret,
+    },
     body: JSON.stringify({
       quote_id,
       raw_email,
       product_description: rfq.product_description,
       quantities: rfq.quantities,
-      supabase_url: process.env.NEXT_PUBLIC_SUPABASE_URL,
-      supabase_service_key: process.env.SUPABASE_SERVICE_ROLE_KEY,
     }),
   })
 
